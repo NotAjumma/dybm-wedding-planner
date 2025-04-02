@@ -17,5 +17,6 @@ var CONFIG = {
         "Sarawak", 
         "Selangor", 
         "Terengganu"
-    ]
+    ],
+    SYSTEM_NAME : "Saya Niaga",
 };
