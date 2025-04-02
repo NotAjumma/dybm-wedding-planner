@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sheets API Test</title>
+</head>
+<body>
+
+    <h2>Check the Console for API Response</h2>
+
+    <script src="config.js"></script>
+    <script>
+        async function testPostPackage() {
+            const data = {
+                type_api: 'package',
+                admin_id: 33,
+                package_name: "Deluxe",
+                price: 7000,
+                description: "Exclusive wedding package with luxury decor",
+                item_list: ["Grand stage", "Premium catering", "Professional photography"],
+                type: 1,
+                order_by: 1,
+                is_show: 1,
+                slug: "deluxe-package",
+                discount_price: 6500,
+            };
+
+            try {
+                let response = await fetch(CONFIG.API_URL, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "text/plain", // ✅ Fix CORS issue
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                console.log("Response:", result);
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        }
+
+        // Run the test
+        // testPostPackage();
+    </script>
+    <script>
+        async function postAdmin() {
+            const data = {
+                type_api: "admin",
+                activation_code: "AC12",
+                name: "John Doe",
+                username: "johndoe",
+                password: "password123",
+                email: "johndoe@example.com",
+                phone: "0123456789",
+                address: "123 Street, KL",
+                company_name: "Wedding Co.",
+                tiktok: "@johnwedding",
+                facebook: "facebook.com/johndoe",
+                instagram: "instagram.com/johndoe",
+                whatsapp: "+60123456789",
+                last_login: new Date().toISOString()  // Explicitly sending current timestamp
+            };
+
+            try {
+                let response = await fetch(CONFIG.API_URL, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "text/plain", // ✅ Fix CORS issue
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                console.log("Response:", result);
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        }
+
+        // Example usage
+        postAdmin();  // To test admin post with last_login
+    </script>
+
+</body>
+</html>
