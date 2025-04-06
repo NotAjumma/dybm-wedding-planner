@@ -83,10 +83,15 @@
                     window.location.href = "login.html";
                 } else {
                     fetchUserInfo(authToken, currentId);
+                    fetchPackagesByAdminId(authToken, currentId);
                     console.log(authToken);
                 }
 
-                const pageName = "Create Package";
+                const pageName = "Create Booking";
+
+                document.querySelectorAll(".page-name").forEach((el) => {
+                    el.textContent = pageName;
+                });
                 // Parallelize async functions to reduce wait time
                 await Promise.all([
                     await createHeader(pageName, CONFIG.SYSTEM_NAME),
@@ -149,7 +154,55 @@
                 }
             }
         }
+        async function fetchPackagesByAdminId(authToken, currentId) {
+            const preloader = document.getElementById('preloader');
+            const packageSelect = document.getElementById('packageSelect');
 
+            try {
+                let response = await fetch(`${CONFIG.API_URL}?action=packages_by_admin_id&token=${authToken}&admin_id=${currentId}`);
+                let data = await response.json();
+
+                console.log(data);
+                if (data.success) {
+                    packageSelect.innerHTML = '<option value="">Select Package</option>';
+
+                    const packages = data.data || [];
+
+                    console.log(packages);
+                    packages.forEach(pkg => {
+                        const option = document.createElement('option');
+                        option.value = pkg.id;
+                        option.textContent = pkg.package_name;
+                        option.setAttribute('data-price', pkg.price);
+                        packageSelect.appendChild(option);
+                    });
+
+                } else {
+                    Swal.fire({
+                        title: "Error",
+                        text: "Session end, please try again",
+                        icon: "error",
+                        confirmButtonText: "Okay",
+                    });
+                    // alert(data.message);
+                    // location.reload();
+
+                }
+            } catch (error) {
+                Swal.fire({
+                    title: "Error",
+                    text: "Network error 33, please try again",
+                    icon: "error",
+                    confirmButtonText: "Okay",
+                });
+                // location.reload();
+            } finally {
+                if (preloader) {
+                    preloader.style.display = "none";
+                }
+
+            }
+        }
     </script>
 
 
@@ -833,98 +886,149 @@
                         <div class="col-12">
                             <div class="card">
                                 <div class="card-header">
-                                    <h4 class="card-title">Create Package</h4>
+                                    <h4 class="card-title page-name">...</h4>
                                 </div>
                                 <div class="card-body">
-                                    <form action="/packages/store" method="POST">
+                                    <form action="" method="POST">
 
-                                        <!-- <input type="hidden" name="type_api" value="create_package" /> -->
                                         <input type="hidden" name="admin_id" value="currentId" />
+
+                                        <!-- Package -->
                                         <div class="mb-3">
-                                            <label for="package_name" class="form-label required">Package Name</label>
-                                            <input type="text" class="form-control" id="package_name"
-                                                name="package_name" required>
+
                                         </div>
 
-                                        <div class="mb-3">
-                                            <label for="price" class="form-label required">Price (RM)</label>
-                                            <input type="number" class="form-control" id="price" name="price"
-                                                step="0.01" required>
-                                        </div>
+                                        <div class="mb-3 row">
+                                            <div class="col-md-6">
+                                                <label for="serviceType" class="form-label required">Service
+                                                    Type</label>
+                                                <select class="form-control" id="serviceType" name="serviceType"
+                                                    required>
+                                                    <option value="">Select Service</option>
+                                                    <!-- Populate with dynamic package options -->
+                                                </select>
+                                            </div>
 
-                                        <div class="mb-3">
-                                            <label for="discount_price" class="form-label">Discount Price
-                                                (Optional)</label>
-                                            <input type="number" class="form-control" id="discount_price"
-                                                name="discount_price" step="0.01">
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="after_discount" class="form-label">After Discount (RM)</label>
-                                            <input type="number" class="form-control" id="after_discount"
-                                                name="after_discount" step="0.01">
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="description" class="form-label">Description</label>
-                                            <textarea class="form-control" id="description" name="description"
-                                                rows="3"></textarea>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="item_list" class="form-label">Item List</label>
-                                            <div id="itemListContainer">
-                                                <!-- Initial input group for the first item -->
-                                                <div class="input-group mb-2" id="itemInputGroup">
-                                                    <input type="text" class="form-control" id="item_input"
-                                                        name="item_list[]" placeholder="Enter item">
-                                                    <button type="button" class="btn btn-success" id="addItemBtn">Add
-                                                        Item</button>
-                                                </div>
+                                            <div class="col-md-6">
+                                                <label for="packageSelect" class="form-label required">Package</label>
+                                                <select class="form-control" id="packageSelect" name="package_id"
+                                                    required>
+                                                    <option value="">Select Package</option>
+                                                    <!-- Populate with dynamic package options -->
+                                                </select>
                                             </div>
                                         </div>
 
-                                        <!-- Work Type Selector -->
-                                        <div class="mb-3">
-                                            <label for="work_type" class="form-label required">Work Type</label>
-                                            <select class="form-control" id="work_type" name="work_type" required>
-                                                <option value="" disabled selected>Select Work Type</option>
-                                                <!-- Options will be populated dynamically -->
-                                            </select>
+                                        <div class="mb-3 row">
+                                            <div class="col-md-6">
+                                                <label for="customer_name" class="form-label required">Customer
+                                                    Name</label>
+                                                <input type="text" class="form-control" id="customer_name"
+                                                    name="customer_name" required>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label for="no_ic" class="form-label">IC Number</label>
+                                                <input type="text" class="form-control" id="no_ic" name="no_ic">
+                                            </div>
                                         </div>
 
-                                        <!-- Package Type Selector -->
-                                        <div class="mb-3">
-                                            <label for="type" class="form-label required">Package Type</label>
-                                            <select class="form-control" id="type" name="type" required>
-                                                <option value="" disabled selected>Select Package Type</option>
-                                                <!-- Options will be populated based on Work Type -->
-                                            </select>
+                                        <div class="mb-3 row">
+                                            <div class="col-md-6">
+                                                <label for="phone" class="form-label">Phone</label>
+                                                <input type="text" class="form-control" id="phone" name="phone"
+                                                    required>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label for="whatsapp" class="form-label">WhatsApp Number</label>
+                                                <input type="text" class="form-control" id="whatsapp" name="whatsapp">
+                                            </div>
                                         </div>
 
+                                        <div class="mb-3 row">
+                                            <div class="col-md-6">
+                                                <label for="address" class="form-label">Address</label>
+                                                <textarea class="form-control" id="address" name="address"
+                                                    rows="3"></textarea>
+                                            </div>
 
-
-                                        <div class="mb-3">
-                                            <label for="order_by" class="form-label">Order By</label>
-                                            <input type="number" class="form-control" id="order_by" name="order_by"
-                                                value="1">
+                                            <div class="col-md-6">
+                                                <label for="stateSelect" class="form-label required">State</label>
+                                                <select class="form-control" id="stateSelect" required>
+                                                    <!-- States will be populated from values.js -->
+                                                </select>
+                                            </div>
                                         </div>
 
-                                        <div class="mb-3">
-                                            <label for="is_show" class="form-label">Visibility</label>
-                                            <select class="form-control" id="is_show" name="is_show">
-                                                <option value="1" selected>Show</option>
-                                                <option value="0">Hide</option>
-                                            </select>
+                                        <div class="mb-3 row">
+                                            <div class="col-md-6">
+                                                <label for="date" class="form-label required">Booking Date</label>
+                                                <input type="date" class="form-control" id="date" name="date" required>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label for="time" class="form-label">Time</label>
+                                                <input type="time" class="form-control" id="time" name="time">
+                                            </div>
                                         </div>
 
-                                        <div class="mb-3">
-                                            <label for="slug" class="form-label">Slug (Optional)</label>
-                                            <input type="text" class="form-control" id="slug" name="slug"
-                                                placeholder="auto-generated if empty">
+                                        <div class="mb-3 row">
+                                            <div class="col-md-4">
+                                                <label for="bookingSelect" class="form-label required">Booking
+                                                    Status</label>
+                                                <select class="form-control" id="bookingSelect" required>
+                                                    <option value="1">In Progress</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label for="paymentTypeSelect" class="form-label required">Payment
+                                                    Type</label>
+                                                <select class="form-control" id="paymentTypeSelect" required>
+                                                    <!-- States will be populated from values.js -->
+                                                </select>
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label for="paymentStatusSelect" class="form-label required">Payment
+                                                    Status</label>
+                                                <select class="form-control" id="paymentStatusSelect" required>
+                                                    <!-- States will be populated from values.js -->
+                                                </select>
+                                            </div>
                                         </div>
 
-                                        <button type="submit" class="btn btn-primary">Create Package</button>
+                                        <div class="mb-3 row">
+                                            <div class="col-md-6">
+                                                <label for="price" class="form-label required">Original Price
+                                                    (RM)</label>
+                                                <input type="number" step="0.01" class="form-control" id="price"
+                                                    name="price" readonly>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label for="discount" class="form-label">Discount (RM)</label>
+                                                <input type="number" step="0.01" class="form-control" id="discount"
+                                                    name="discount">
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3 row">
+                                            <div class="col-md-6">
+                                                <label for="amountPaid" class="form-label">Amount Paid (RM)</label>
+                                                <input type="number" step="0.01" class="form-control" id="amountPaid"
+                                                    name="amount_paid">
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label for="balance" class="form-label required">Balance (RM)</label>
+                                                <input type="number" step="0.01" class="form-control" id="balance"
+                                                    name="balance" readonly>
+                                            </div>
+                                        </div>
+
+                                        <button type="submit" class="btn btn-primary page-name">...</button>
                                     </form>
                                 </div>
                             </div>
@@ -944,7 +1048,8 @@
         <div class="footer">
             <div class="copyright">
                 <p>Copyright © Designed &amp; Developed by <a href="https://dexignlab.com/"
-                        target="_blank">DexignLab</a> <span class="current-year">2024</span>
+                        target="_blank">DexignLab</a>
+                    <span class="current-year">2024</span>
                 </p>
             </div>
         </div>
@@ -987,136 +1092,223 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const currentId = sessionStorage.getItem("currentUserId");
-            const adminIdInput = document.querySelector('input[name="admin_id"]');
-            if (currentId && adminIdInput) {
-                adminIdInput.value = currentId;
+        document.getElementById('paymentTypeSelect').addEventListener('change', function () {
+            const paymentType = this.value;
+            const balanceField = document.getElementById('balance').closest('.col-md-6');
+            const amountField = parseFloat(document.getElementById('price').value || 0);
+            const amountPaidInput = document.getElementById('amountPaid');
+            const balanceInput = document.getElementById('balance');
+            const discountInput = document.getElementById('discount');
+            const paymentStatusSelect = document.getElementById('paymentStatusSelect');
+
+            const amount = parseFloat(document.getElementById('price').value || 0);
+            const discount = parseFloat(discountInput.value || 0);
+            const amountAfterDiscount = amount - discount;
+
+            // Reset discount to 0
+            discountInput.value = 0;
+
+            if (paymentType == "2") {
+                // Full Payment
+                discountInput.value = 0;
+                balanceField.style.display = "none";
+                amountPaidInput.value = amountAfterDiscount.toFixed(2);
+                balanceInput.value = 0;
+
+                // Set payment status to 2 (Paid)
+                paymentStatusSelect.value = "2";
             } else {
-                console.error("Current user ID not found or input field not found.");
+                // Deposit or others
+                discountInput.value = 0;
+                balanceField.style.display = "block";
+                amountPaidInput.value = "";
+                balanceInput.value = amountAfterDiscount.toFixed(2);
+
+                // Optional: Reset payment status (optional)
+                paymentStatusSelect.value = "";
             }
-            const workTypeSelect = document.getElementById("work_type");
-            const packageTypeSelect = document.getElementById("type");
+        });
 
-            const workTypeId = sessionStorage.getItem("workTypeId");
+        document.getElementById('discount').addEventListener('change', function () {
+            const amountPaidInput = document.getElementById('amountPaid');
+            const balanceInput = document.getElementById('balance');
+            const amount = parseFloat(document.getElementById('price').value || 0);
+            const discount = parseFloat(document.getElementById('discount').value || 0);
 
-            for (const [key, value] of Object.entries(CONFIG.WORK_TYPE)) {
-                const option = document.createElement("option");
+            const amountAfterDiscount = amount - discount;
+            // amountPaidInput.value = amountAfterDiscount.toFixed(2);
+            balanceInput.value = amountAfterDiscount.toFixed(2);
+        });
+
+        document.getElementById('amountPaid').addEventListener('change', function () {
+            const balanceInput = document.getElementById('balance');
+            const amount = parseFloat(document.getElementById('price').value || 0);
+            const discount = parseFloat(document.getElementById('discount').value || 0);
+            const amountPaidInput = parseFloat(document.getElementById('amountPaid').value || 0);
+
+            const amountAfterDiscount = amount - discount - amountPaidInput;
+            // amountPaidInput.value = amountAfterDiscount.toFixed(2);
+            balanceInput.value = amountAfterDiscount.toFixed(2);
+        });
+
+        document.getElementById('packageSelect').addEventListener('change', function () {
+            const selectedOption = this.options[this.selectedIndex];
+            const price = selectedOption.getAttribute('data-price');
+
+            // Only update if price is available
+            if (price) {
+                document.getElementById('price').value = parseFloat(price).toFixed(2);
+            } else {
+                document.getElementById('price').value = '';
+            }
+        });
+
+        function populateStateDropdown() {
+            const stateSelect = document.getElementById('stateSelect');
+            stateSelect.innerHTML = '';
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Select State';
+            stateSelect.appendChild(defaultOption);
+
+            CONFIG.STATES.forEach(state => {
+                const option = document.createElement('option');
+                option.value = state;
+                option.textContent = state;
+                stateSelect.appendChild(option);
+            });
+        }
+
+        // function populateStatusDropdown() {
+        //     const statusSelect = document.getElementById('bookingSelect');
+        //     statusSelect.innerHTML = '';
+
+        //     const defaultOption = document.createElement('option');
+        //     defaultOption.value = '';
+        //     defaultOption.textContent = 'Select Status';
+        //     statusSelect.appendChild(defaultOption);
+
+        //     Object.entries(CONFIG.STATUS_BOOKING).forEach(([key, value]) => {
+        //         const option = document.createElement('option');
+        //         option.value = key;
+        //         option.textContent = value;
+
+        //         if (key == "1") {
+        //             option.selected = true;
+        //         }
+
+        //         statusSelect.appendChild(option);
+        //     });
+        // }
+
+        function populatePaymentStatusDropdown() {
+            const statusSelect = document.getElementById('paymentStatusSelect');
+            statusSelect.innerHTML = '';
+
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Select Payment Status';
+            statusSelect.appendChild(defaultOption);
+
+            Object.entries(CONFIG.STATUS_PAYMENT).forEach(([key, value]) => {
+                const option = document.createElement('option');
                 option.value = key;
-                option.textContent = value.label;
+                option.textContent = value;
+                statusSelect.appendChild(option);
+            });
+        }
 
-                // console.log(key);
-                // console.log(workTypeId);
-                if (workTypeId.includes(key)) {
-                    // option.selected = true;  
-                    workTypeSelect.appendChild(option);
-                }
+        function populatePaymentTypeDropdown() {
+            const statusSelect = document.getElementById('paymentTypeSelect');
+            statusSelect.innerHTML = '';
 
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Select Payment Type';
+            statusSelect.appendChild(defaultOption);
+
+            Object.entries(CONFIG.PAYMENT_TYPE).forEach(([key, value]) => {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = value;
+                statusSelect.appendChild(option);
+            });
+        }
+
+
+        document.addEventListener('DOMContentLoaded', function () {
+            populateStateDropdown();
+            // populateStatusDropdown();
+            populatePaymentStatusDropdown();
+            populatePaymentTypeDropdown();
+            const serviceTypeSelect = document.getElementById("serviceType");
+            // Get from CONFIG (already loaded globally)
+            const WORK_TYPE = CONFIG.WORK_TYPE;
+
+            // Get workTypeId from sessionStorage
+            const workTypeData = sessionStorage.getItem("workTypeId");
+            if (!workTypeData) return;
+
+            let workTypes = [];
+
+            try {
+                workTypes = JSON.parse(workTypeData);
+            } catch (e) {
+                workTypes = [parseInt(workTypeData)];
             }
 
-            workTypeSelect.addEventListener("change", function () {
-                const selectedWorkType = this.value;
+            // Reset options
+            serviceTypeSelect.innerHTML = '<option value="">Select Service</option>';
 
-                packageTypeSelect.innerHTML = `<option value="" disabled selected>Select Package Type</option>`;
-
-                if (CONFIG.WORK_TYPE[selectedWorkType]) {
-                    const typePackage = CONFIG.WORK_TYPE[selectedWorkType].TYPE_PACKAGE;
-
-                    for (const [typeKey, typeLabel] of Object.entries(typePackage)) {
-                        const option = document.createElement("option");
-                        option.value = typeKey;
-                        option.textContent = typeLabel;
-                        packageTypeSelect.appendChild(option);
-                    }
+            workTypes.forEach(typeId => {
+                const work = WORK_TYPE[typeId];
+                if (work) {
+                    const option = document.createElement("option");
+                    option.value = typeId;
+                    option.textContent = work.label;
+                    serviceTypeSelect.appendChild(option);
                 }
             });
         });
-
     </script>
 
+
     <script>
-        function updateAfterDiscount() {
-            const price = parseFloat(document.getElementById("price").value) || 0;
-            const discountPrice = parseFloat(document.getElementById("discount_price").value) || 0;
-
-            const afterDiscount = price - discountPrice;
-
-            // Update the 'after_discount' field
-            document.getElementById("after_discount").value = afterDiscount.toFixed(2); // Format to 2 decimal places
+        const form = document.querySelector('form');
+        const currentId = sessionStorage.getItem("currentUserId");
+        const adminIdInput = document.querySelector('input[name="admin_id"]');
+        if (currentId && adminIdInput) {
+            adminIdInput.value = currentId;
+        } else {
+            console.error("Current user ID not found or input field not found.");
         }
-
-        // Add event listeners to price and discount_price fields
-        document.getElementById("price").addEventListener("input", updateAfterDiscount);
-        document.getElementById("discount_price").addEventListener("input", updateAfterDiscount);
-
-        // Call the function once in case there's already data in the fields when the page loads
-        updateAfterDiscount();
-
-        document.getElementById("addItemBtn").addEventListener("click", function () {
-            const itemInput = document.getElementById("item_input");
-            const itemListContainer = document.getElementById("itemListContainer");
-
-            const itemValue = itemInput.value.trim();
-            if (itemValue !== "") {
-                const newItem = document.createElement("div");
-                newItem.classList.add("input-group", "mb-2");
-
-                newItem.innerHTML = `
-            <input type="text" class="form-control" value="${itemValue}" disabled>
-            <button type="button" class="btn btn-danger removeItemBtn">Remove</button>
-        `;
-
-                itemListContainer.appendChild(newItem);
-                itemInput.value = ""; // Clear the input field
-
-                // Add functionality to remove item
-                newItem.querySelector(".removeItemBtn").addEventListener("click", function () {
-                    newItem.remove();
-                });
-            }
-        });
-
-    </script>
-
-
-    <script>
-        const form = document.querySelector('form'); // Get the form
-        const workTypeSelect = document.getElementById("work_type");
-        const typeSelect = document.getElementById("type");
-
         if (form) {
             form.addEventListener("submit", async function (event) {
                 event.preventDefault();
                 // console.log(preloader);
                 if (preloader) {
-                    preloader.style.display = "flex"; 
+                    preloader.style.display = "flex";
                 }
 
                 const formData = new FormData(form);
 
-                const itemInputs = document.querySelectorAll("#itemListContainer input[type='text']");
-                const itemList = Array.from(itemInputs).map(input => input.value.trim()).filter(value => value !== "");
-
                 const data = {
-                    type_api: "create_package",
+                    type_api: "create_worker",
                     admin_id: document.querySelector('input[name="admin_id"]').value,
-                    package_name: document.getElementById("package_name").value,
-                    price: document.getElementById("price").value,
-                    description: document.getElementById("description").value,
-                    item_list: itemList,  // Send item_list as an array
-                    order_by: document.getElementById("order_by").value,
-                    is_show: document.getElementById("is_show").value,
-                    slug: document.getElementById("slug").value,
-                    work_type: document.getElementById("work_type").value,
-                    type: document.getElementById("type").value,
-                    after_discount: document.getElementById("after_discount").value,
+                    name: document.getElementById("name").value,
+                    phone: document.getElementById("phone").value,
+                    whatsapp: document.getElementById("whatsapp").value,
+                    address: document.getElementById("address").value,
+                    state: document.getElementById("stateSelect").value,
+                    worker_type: document.getElementById("worker_type_select").value,
+                    status: document.getElementById("status_select").value,
                 };
 
                 formData.forEach((value, key) => {
                     data[key] = value;
                 });
 
-                // console.log(data); 
+                console.log(data);
 
                 try {
                     const response = await fetch(CONFIG.API_URL, {
@@ -1133,7 +1325,7 @@
                     if (result.success) {
                         Swal.fire({
                             title: "Success!",
-                            text: "Package created successfully!",
+                            text: `Create booking successfully!`,
                             icon: "success",
                             confirmButtonText: "Okay",
                         }).then(() => {
@@ -1150,13 +1342,13 @@
                 } catch (error) {
                     Swal.fire({
                         title: "Error",
-                        text: "Failed to create package. Please try again.",
+                        text: `Create booking failed. Please try again.`,
                         icon: "error",
                         confirmButtonText: "Okay",
                     });
                 } finally {
                     if (preloader) {
-                        preloader.style.display = "none"; 
+                        preloader.style.display = "none";
                     }
                 }
             });

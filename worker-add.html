@@ -86,7 +86,11 @@
                     console.log(authToken);
                 }
 
-                const pageName = "Create Package";
+                const pageName = "Create Worker";
+
+                document.querySelectorAll(".page-name").forEach((el) => {
+                    el.textContent = pageName;
+                });
                 // Parallelize async functions to reduce wait time
                 await Promise.all([
                     await createHeader(pageName, CONFIG.SYSTEM_NAME),
@@ -833,98 +837,67 @@
                         <div class="col-12">
                             <div class="card">
                                 <div class="card-header">
-                                    <h4 class="card-title">Create Package</h4>
+                                    <h4 class="card-title page-name">...</h4>
                                 </div>
                                 <div class="card-body">
-                                    <form action="/packages/store" method="POST">
+                                    <form action="" method="POST">
 
                                         <!-- <input type="hidden" name="type_api" value="create_package" /> -->
                                         <input type="hidden" name="admin_id" value="currentId" />
                                         <div class="mb-3">
-                                            <label for="package_name" class="form-label required">Package Name</label>
-                                            <input type="text" class="form-control" id="package_name"
-                                                name="package_name" required>
+                                            <label for="name" class="form-label required">Worker Name</label>
+                                            <input type="text" class="form-control" id="name" name="name" required>
                                         </div>
 
-                                        <div class="mb-3">
-                                            <label for="price" class="form-label required">Price (RM)</label>
-                                            <input type="number" class="form-control" id="price" name="price"
-                                                step="0.01" required>
-                                        </div>
+                                        <div class="mb-3 row">
+                                            <div class="col-md-6">
+                                                <label for="phone" class="form-label required">Phone</label>
+                                                <input type="text" class="form-control" id="phone" name="phone"
+                                                    required>
+                                            </div>
 
-                                        <div class="mb-3">
-                                            <label for="discount_price" class="form-label">Discount Price
-                                                (Optional)</label>
-                                            <input type="number" class="form-control" id="discount_price"
-                                                name="discount_price" step="0.01">
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="after_discount" class="form-label">After Discount (RM)</label>
-                                            <input type="number" class="form-control" id="after_discount"
-                                                name="after_discount" step="0.01">
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="description" class="form-label">Description</label>
-                                            <textarea class="form-control" id="description" name="description"
-                                                rows="3"></textarea>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="item_list" class="form-label">Item List</label>
-                                            <div id="itemListContainer">
-                                                <!-- Initial input group for the first item -->
-                                                <div class="input-group mb-2" id="itemInputGroup">
-                                                    <input type="text" class="form-control" id="item_input"
-                                                        name="item_list[]" placeholder="Enter item">
-                                                    <button type="button" class="btn btn-success" id="addItemBtn">Add
-                                                        Item</button>
-                                                </div>
+                                            <div class="col-md-6">
+                                                <label for="whatsapp" class="form-label required">WhatsApp</label>
+                                                <input type="text" class="form-control" id="whatsapp" name="whatsapp"
+                                                    required>
                                             </div>
                                         </div>
 
-                                        <!-- Work Type Selector -->
-                                        <div class="mb-3">
-                                            <label for="work_type" class="form-label required">Work Type</label>
-                                            <select class="form-control" id="work_type" name="work_type" required>
-                                                <option value="" disabled selected>Select Work Type</option>
-                                                <!-- Options will be populated dynamically -->
-                                            </select>
+                                        <div class="mb-3 row">
+                                            <div class="col-md-6">
+                                                <label for="address" class="form-label">Address</label>
+                                                <textarea class="form-control" id="address" name="address"
+                                                    rows="3"></textarea>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label for="stateSelect" class="form-label">State</label>
+                                                <select class="form-control" id="stateSelect">
+                                                    <!-- States will be populated from values.js -->
+                                                </select>
+                                            </div>
                                         </div>
 
-                                        <!-- Package Type Selector -->
-                                        <div class="mb-3">
-                                            <label for="type" class="form-label required">Package Type</label>
-                                            <select class="form-control" id="type" name="type" required>
-                                                <option value="" disabled selected>Select Package Type</option>
-                                                <!-- Options will be populated based on Work Type -->
-                                            </select>
+                                        <div class="mb-3 row">
+                                            <div class="col-md-6">
+                                                <label for="worker_type" class="form-label required">Worker Type</label>
+                                                <select class="form-control" id="worker_type_select" name="worker_type"
+                                                    required>
+                                                    <option value="" disabled selected>Select Worker Type</option>
+                                                    <!-- Options will be populated dynamically -->
+                                                </select>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label for="status" class="form-label">Status</label>
+                                                <select class="form-control" id="status_select" name="status">
+                                                    <option value="" disabled selected>Select Status</option>
+                                                    <!-- Options will be populated dynamically -->
+                                                </select>
+                                            </div>
                                         </div>
 
-
-
-                                        <div class="mb-3">
-                                            <label for="order_by" class="form-label">Order By</label>
-                                            <input type="number" class="form-control" id="order_by" name="order_by"
-                                                value="1">
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="is_show" class="form-label">Visibility</label>
-                                            <select class="form-control" id="is_show" name="is_show">
-                                                <option value="1" selected>Show</option>
-                                                <option value="0">Hide</option>
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="slug" class="form-label">Slug (Optional)</label>
-                                            <input type="text" class="form-control" id="slug" name="slug"
-                                                placeholder="auto-generated if empty">
-                                        </div>
-
-                                        <button type="submit" class="btn btn-primary">Create Package</button>
+                                        <button type="submit" class="btn btn-primary page-name">...</button>
                                     </form>
                                 </div>
                             </div>
@@ -944,7 +917,8 @@
         <div class="footer">
             <div class="copyright">
                 <p>Copyright © Designed &amp; Developed by <a href="https://dexignlab.com/"
-                        target="_blank">DexignLab</a> <span class="current-year">2024</span>
+                        target="_blank">DexignLab</a>
+                    <span class="current-year">2024</span>
                 </p>
             </div>
         </div>
@@ -987,136 +961,106 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const currentId = sessionStorage.getItem("currentUserId");
-            const adminIdInput = document.querySelector('input[name="admin_id"]');
-            if (currentId && adminIdInput) {
-                adminIdInput.value = currentId;
-            } else {
-                console.error("Current user ID not found or input field not found.");
-            }
-            const workTypeSelect = document.getElementById("work_type");
-            const packageTypeSelect = document.getElementById("type");
+        function populateStateDropdown() {
+            const stateSelect = document.getElementById('stateSelect');
+            stateSelect.innerHTML = '';
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Select State';
+            stateSelect.appendChild(defaultOption);
 
-            const workTypeId = sessionStorage.getItem("workTypeId");
-
-            for (const [key, value] of Object.entries(CONFIG.WORK_TYPE)) {
-                const option = document.createElement("option");
-                option.value = key;
-                option.textContent = value.label;
-
-                // console.log(key);
-                // console.log(workTypeId);
-                if (workTypeId.includes(key)) {
-                    // option.selected = true;  
-                    workTypeSelect.appendChild(option);
-                }
-
-            }
-
-            workTypeSelect.addEventListener("change", function () {
-                const selectedWorkType = this.value;
-
-                packageTypeSelect.innerHTML = `<option value="" disabled selected>Select Package Type</option>`;
-
-                if (CONFIG.WORK_TYPE[selectedWorkType]) {
-                    const typePackage = CONFIG.WORK_TYPE[selectedWorkType].TYPE_PACKAGE;
-
-                    for (const [typeKey, typeLabel] of Object.entries(typePackage)) {
-                        const option = document.createElement("option");
-                        option.value = typeKey;
-                        option.textContent = typeLabel;
-                        packageTypeSelect.appendChild(option);
-                    }
-                }
+            CONFIG.STATES.forEach(state => {
+                const option = document.createElement('option');
+                option.value = state;
+                option.textContent = state;
+                stateSelect.appendChild(option);
             });
-        });
-
-    </script>
-
-    <script>
-        function updateAfterDiscount() {
-            const price = parseFloat(document.getElementById("price").value) || 0;
-            const discountPrice = parseFloat(document.getElementById("discount_price").value) || 0;
-
-            const afterDiscount = price - discountPrice;
-
-            // Update the 'after_discount' field
-            document.getElementById("after_discount").value = afterDiscount.toFixed(2); // Format to 2 decimal places
         }
 
-        // Add event listeners to price and discount_price fields
-        document.getElementById("price").addEventListener("input", updateAfterDiscount);
-        document.getElementById("discount_price").addEventListener("input", updateAfterDiscount);
+        function populateStatusDropdown() {
+            const statusSelect = document.getElementById('status_select');
+            statusSelect.innerHTML = '';
 
-        // Call the function once in case there's already data in the fields when the page loads
-        updateAfterDiscount();
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Select Status';
+            statusSelect.appendChild(defaultOption);
 
-        document.getElementById("addItemBtn").addEventListener("click", function () {
-            const itemInput = document.getElementById("item_input");
-            const itemListContainer = document.getElementById("itemListContainer");
+            Object.entries(CONFIG.STATUS_BASIC).forEach(([key, value]) => {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = value;
 
-            const itemValue = itemInput.value.trim();
-            if (itemValue !== "") {
-                const newItem = document.createElement("div");
-                newItem.classList.add("input-group", "mb-2");
+                if (key == "1") {
+                    option.selected = true;
+                }
 
-                newItem.innerHTML = `
-            <input type="text" class="form-control" value="${itemValue}" disabled>
-            <button type="button" class="btn btn-danger removeItemBtn">Remove</button>
-        `;
+                statusSelect.appendChild(option);
+            });
+        }
 
-                itemListContainer.appendChild(newItem);
-                itemInput.value = ""; // Clear the input field
+        function populateWorkerTypeDropdown() {
+            const statusSelect = document.getElementById('worker_type_select');
+            statusSelect.innerHTML = '';
 
-                // Add functionality to remove item
-                newItem.querySelector(".removeItemBtn").addEventListener("click", function () {
-                    newItem.remove();
-                });
-            }
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Select Worker Type';
+            statusSelect.appendChild(defaultOption);
+
+            Object.entries(CONFIG.WORKER_TYPE).forEach(([key, value]) => {
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = value;
+                statusSelect.appendChild(option);
+            });
+        }
+
+
+        document.addEventListener('DOMContentLoaded', function () {
+            populateStateDropdown();
+            populateStatusDropdown();
+            populateWorkerTypeDropdown();
         });
-
     </script>
 
 
     <script>
-        const form = document.querySelector('form'); // Get the form
-        const workTypeSelect = document.getElementById("work_type");
-        const typeSelect = document.getElementById("type");
-
+        const form = document.querySelector('form');
+        const currentId = sessionStorage.getItem("currentUserId");
+        const adminIdInput = document.querySelector('input[name="admin_id"]');
+        if (currentId && adminIdInput) {
+            adminIdInput.value = currentId;
+        } else {
+            console.error("Current user ID not found or input field not found.");
+        }
         if (form) {
             form.addEventListener("submit", async function (event) {
                 event.preventDefault();
                 // console.log(preloader);
                 if (preloader) {
-                    preloader.style.display = "flex"; 
+                    preloader.style.display = "flex";
                 }
 
                 const formData = new FormData(form);
 
-                const itemInputs = document.querySelectorAll("#itemListContainer input[type='text']");
-                const itemList = Array.from(itemInputs).map(input => input.value.trim()).filter(value => value !== "");
-
                 const data = {
-                    type_api: "create_package",
+                    type_api: "create_worker",
                     admin_id: document.querySelector('input[name="admin_id"]').value,
-                    package_name: document.getElementById("package_name").value,
-                    price: document.getElementById("price").value,
-                    description: document.getElementById("description").value,
-                    item_list: itemList,  // Send item_list as an array
-                    order_by: document.getElementById("order_by").value,
-                    is_show: document.getElementById("is_show").value,
-                    slug: document.getElementById("slug").value,
-                    work_type: document.getElementById("work_type").value,
-                    type: document.getElementById("type").value,
-                    after_discount: document.getElementById("after_discount").value,
+                    name: document.getElementById("name").value,
+                    phone: document.getElementById("phone").value,
+                    whatsapp: document.getElementById("whatsapp").value,
+                    address: document.getElementById("address").value,
+                    state: document.getElementById("stateSelect").value,
+                    worker_type: document.getElementById("worker_type_select").value,
+                    status: document.getElementById("status_select").value,
                 };
 
                 formData.forEach((value, key) => {
                     data[key] = value;
                 });
 
-                // console.log(data); 
+                console.log(data);
 
                 try {
                     const response = await fetch(CONFIG.API_URL, {
@@ -1133,7 +1077,7 @@
                     if (result.success) {
                         Swal.fire({
                             title: "Success!",
-                            text: "Package created successfully!",
+                            text: `Create worker successfully!`,
                             icon: "success",
                             confirmButtonText: "Okay",
                         }).then(() => {
@@ -1150,13 +1094,13 @@
                 } catch (error) {
                     Swal.fire({
                         title: "Error",
-                        text: "Failed to create package. Please try again.",
+                        text: `Create worker failed. Please try again.`,
                         icon: "error",
                         confirmButtonText: "Okay",
                     });
                 } finally {
                     if (preloader) {
-                        preloader.style.display = "none"; 
+                        preloader.style.display = "none";
                     }
                 }
             });

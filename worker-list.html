@@ -63,12 +63,11 @@
 
         document.addEventListener('DOMContentLoaded', async function () {
             document.getElementById("preloader").style.display = "flex";
-            const preloader = document.getElementById("preloader"); // Loader element (optional)
-            console.log("preloader");
-            console.log(preloader);
 
             const authToken = sessionStorage.getItem("authToken");
             const currentId = sessionStorage.getItem("currentUserId");
+
+
 
             const systemNameElement = document.querySelector('.system-name'); // Target the correct class
             if (systemNameElement) {
@@ -83,10 +82,15 @@
                     window.location.href = "login.html";
                 } else {
                     fetchUserInfo(authToken, currentId);
+                    fetchWorkersByAdminId(authToken, currentId);
                     console.log(authToken);
                 }
 
-                const pageName = "Create Package";
+                const pageName = "Workers List";
+
+                document.querySelectorAll(".page-name").forEach((el) => {
+                    el.textContent = pageName;
+                });
                 // Parallelize async functions to reduce wait time
                 await Promise.all([
                     await createHeader(pageName, CONFIG.SYSTEM_NAME),
@@ -121,9 +125,6 @@
                     document.querySelectorAll(".userEmail").forEach((el) => {
                         el.textContent = data.user.email;
                     });
-
-                    sessionStorage.setItem("workTypeId", data.user.work_type);
-
                 } else {
                     Swal.fire({
                         title: "Error",
@@ -132,18 +133,106 @@
                         confirmButtonText: "Okay",
                     });
                     // alert(data.message);
-                    // localStorage.removeItem("authToken"); // Clear invalid token
-                    // window.location.href = "login.html"; // Redirect to login
+                    localStorage.removeItem("authToken"); // Clear invalid token
+                    window.location.href = "login.html"; // Redirect to login
                 }
             } catch (error) {
                 Swal.fire({
                     title: "Error",
-                    text: "Network error, please re-login",
+                    text: "Network error 22, please re-login",
                     icon: "error",
                     confirmButtonText: "Okay",
                 });
                 // location.reload();
             } finally {
+                if (preloader) {
+                    preloader.style.display = "none";
+                }
+
+            }
+        }
+
+        async function fetchWorkersByAdminId(authToken, currentId) {
+            const preloader = document.getElementById('preloader');
+
+            try {
+                // Fetch workers data from the API
+                let response = await fetch(`${CONFIG.API_URL}?action=workers_by_admin_id&token=${authToken}&admin_id=${currentId}`);
+                let data = await response.json();
+
+                console.log(data); // Debugging log to inspect the fetched data
+
+                if (data.success) {
+                    const workers = data.data; // Assuming workers data comes under 'data' key
+                    const tbody = document.getElementById("workerTableBody"); // The table body where we want to display workers
+                    tbody.innerHTML = ""; // Clear existing rows before inserting new ones
+
+                    // Loop through each worker and create a new table row
+                    workers.forEach((worker, index) => {
+                        const statusLabel = (() => {
+                            const label = CONFIG.STATUS_BASIC[worker.status] || "Unknown";
+                            const badgeClass = worker.status == 1 ? "success" : "danger"; // Success for active, danger for hidden
+                            return `<span class="badge badge-pill badge-${badgeClass}">${label}</span>`;
+                        })();
+
+                        const workerTypeLabel = (() => {
+                            const label = CONFIG.WORKER_TYPE[worker.worker_type] || "Unknown";
+                            const badgeClass = worker.worker_type == 1 ? "warning" : "primary"; // Success for active, danger for hidden
+                            return `<span class="badge badge-pill badge-${badgeClass}">${label}</span>`;
+                        })();
+
+                        // Creating table row with worker's information
+                        const row = `
+                    <tr>
+                        <td>
+                            <div class="form-check custom-checkbox">
+                                <input type="checkbox" class="form-check-input" id="customCheckBox${index}" />
+                                <label class="form-check-label" for="customCheckBox${index}"></label>
+                            </div>
+                        </td>
+                        <td>#${worker.id}</td>
+                        <td>${worker.name}</td>
+                        <td>${worker.phone}</td>
+                        <td>${worker.whatsapp}</td>
+                        <td>${worker.state}</td>
+                        <td>${workerTypeLabel}</td>
+                        <td>RM ${worker.wallet.toLocaleString()}</td>
+                        <td>${statusLabel}</td>
+                        <td>
+                            <div class="dropdown ms-auto c-pointer">
+                                <div class="btn-link" data-bs-toggle="dropdown">
+                                    <button type="button" class="btn btn-primary dropdown-toggle btn-xs">Action</button>
+                                </div>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="#">Edit</a>
+                                    <a class="dropdown-item" href="#">Delete</a>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+
+                        // Insert the new row into the table body
+                        tbody.insertAdjacentHTML("beforeend", row);
+                    });
+                } else {
+                    Swal.fire({
+                        title: "Error",
+                        text: "Session expired, please try again.",
+                        icon: "error",
+                        confirmButtonText: "Okay",
+                    });
+                }
+
+            } catch (error) {
+                Swal.fire({
+                    title: "Error",
+                    text: "Network error, please try again.",
+                    icon: "error",
+                    confirmButtonText: "Okay",
+                });
+            } finally {
+                // Hide the preloader after data fetching is complete
                 if (preloader) {
                     preloader.style.display = "none";
                 }
@@ -159,12 +248,7 @@
         Main wrapper start
     ***********************************-->
     <div id="main-wrapper">
-        <div id="preloader" class="overlay" style="background: rgba(0, 0, 0, 0.3); display: none;">
-            <div class="lds-ripple">
-                <div></div>
-                <div></div>
-            </div>
-        </div>
+
         <!--**********************************
             Nav header start
         ***********************************-->
@@ -833,99 +917,36 @@
                         <div class="col-12">
                             <div class="card">
                                 <div class="card-header">
-                                    <h4 class="card-title">Create Package</h4>
+                                    <h4 class="card-title page-name"></h4>
                                 </div>
                                 <div class="card-body">
-                                    <form action="/packages/store" method="POST">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-responsive-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>
+                                                        <div class="form-check custom-checkbox">
+                                                            <input type="checkbox" class="form-check-input"
+                                                                id="checkAll" required="">
+                                                            <label class="form-check-label" for="checkAll"></label>
+                                                        </div>
+                                                    </th>
+                                                    <th>Worker No</th>
+                                                    <th>Name</th>
+                                                    <th>Phone</th>
+                                                    <th>WhatsApp</th>
+                                                    <th>State</th>
+                                                    <th>Worker Type</th>
+                                                    <th>Wallet</th>
+                                                    <th>Status</th>
+                                                    <th>Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="workerTableBody">
 
-                                        <!-- <input type="hidden" name="type_api" value="create_package" /> -->
-                                        <input type="hidden" name="admin_id" value="currentId" />
-                                        <div class="mb-3">
-                                            <label for="package_name" class="form-label required">Package Name</label>
-                                            <input type="text" class="form-control" id="package_name"
-                                                name="package_name" required>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="price" class="form-label required">Price (RM)</label>
-                                            <input type="number" class="form-control" id="price" name="price"
-                                                step="0.01" required>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="discount_price" class="form-label">Discount Price
-                                                (Optional)</label>
-                                            <input type="number" class="form-control" id="discount_price"
-                                                name="discount_price" step="0.01">
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="after_discount" class="form-label">After Discount (RM)</label>
-                                            <input type="number" class="form-control" id="after_discount"
-                                                name="after_discount" step="0.01">
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="description" class="form-label">Description</label>
-                                            <textarea class="form-control" id="description" name="description"
-                                                rows="3"></textarea>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="item_list" class="form-label">Item List</label>
-                                            <div id="itemListContainer">
-                                                <!-- Initial input group for the first item -->
-                                                <div class="input-group mb-2" id="itemInputGroup">
-                                                    <input type="text" class="form-control" id="item_input"
-                                                        name="item_list[]" placeholder="Enter item">
-                                                    <button type="button" class="btn btn-success" id="addItemBtn">Add
-                                                        Item</button>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Work Type Selector -->
-                                        <div class="mb-3">
-                                            <label for="work_type" class="form-label required">Work Type</label>
-                                            <select class="form-control" id="work_type" name="work_type" required>
-                                                <option value="" disabled selected>Select Work Type</option>
-                                                <!-- Options will be populated dynamically -->
-                                            </select>
-                                        </div>
-
-                                        <!-- Package Type Selector -->
-                                        <div class="mb-3">
-                                            <label for="type" class="form-label required">Package Type</label>
-                                            <select class="form-control" id="type" name="type" required>
-                                                <option value="" disabled selected>Select Package Type</option>
-                                                <!-- Options will be populated based on Work Type -->
-                                            </select>
-                                        </div>
-
-
-
-                                        <div class="mb-3">
-                                            <label for="order_by" class="form-label">Order By</label>
-                                            <input type="number" class="form-control" id="order_by" name="order_by"
-                                                value="1">
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="is_show" class="form-label">Visibility</label>
-                                            <select class="form-control" id="is_show" name="is_show">
-                                                <option value="1" selected>Show</option>
-                                                <option value="0">Hide</option>
-                                            </select>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="slug" class="form-label">Slug (Optional)</label>
-                                            <input type="text" class="form-control" id="slug" name="slug"
-                                                placeholder="auto-generated if empty">
-                                        </div>
-
-                                        <button type="submit" class="btn btn-primary">Create Package</button>
-                                    </form>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -979,193 +1000,13 @@
     <script src="vendor/bootstrap-select/dist/js/bootstrap-select.min.js"></script>
     <script src="js/custom.min.js"></script>
     <script src="js/dlabnav-init.js"></script>
+
     <!-- Bootstrap JS (requires Popper.js) -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/js/bootstrap.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const currentId = sessionStorage.getItem("currentUserId");
-            const adminIdInput = document.querySelector('input[name="admin_id"]');
-            if (currentId && adminIdInput) {
-                adminIdInput.value = currentId;
-            } else {
-                console.error("Current user ID not found or input field not found.");
-            }
-            const workTypeSelect = document.getElementById("work_type");
-            const packageTypeSelect = document.getElementById("type");
-
-            const workTypeId = sessionStorage.getItem("workTypeId");
-
-            for (const [key, value] of Object.entries(CONFIG.WORK_TYPE)) {
-                const option = document.createElement("option");
-                option.value = key;
-                option.textContent = value.label;
-
-                // console.log(key);
-                // console.log(workTypeId);
-                if (workTypeId.includes(key)) {
-                    // option.selected = true;  
-                    workTypeSelect.appendChild(option);
-                }
-
-            }
-
-            workTypeSelect.addEventListener("change", function () {
-                const selectedWorkType = this.value;
-
-                packageTypeSelect.innerHTML = `<option value="" disabled selected>Select Package Type</option>`;
-
-                if (CONFIG.WORK_TYPE[selectedWorkType]) {
-                    const typePackage = CONFIG.WORK_TYPE[selectedWorkType].TYPE_PACKAGE;
-
-                    for (const [typeKey, typeLabel] of Object.entries(typePackage)) {
-                        const option = document.createElement("option");
-                        option.value = typeKey;
-                        option.textContent = typeLabel;
-                        packageTypeSelect.appendChild(option);
-                    }
-                }
-            });
-        });
-
-    </script>
-
-    <script>
-        function updateAfterDiscount() {
-            const price = parseFloat(document.getElementById("price").value) || 0;
-            const discountPrice = parseFloat(document.getElementById("discount_price").value) || 0;
-
-            const afterDiscount = price - discountPrice;
-
-            // Update the 'after_discount' field
-            document.getElementById("after_discount").value = afterDiscount.toFixed(2); // Format to 2 decimal places
-        }
-
-        // Add event listeners to price and discount_price fields
-        document.getElementById("price").addEventListener("input", updateAfterDiscount);
-        document.getElementById("discount_price").addEventListener("input", updateAfterDiscount);
-
-        // Call the function once in case there's already data in the fields when the page loads
-        updateAfterDiscount();
-
-        document.getElementById("addItemBtn").addEventListener("click", function () {
-            const itemInput = document.getElementById("item_input");
-            const itemListContainer = document.getElementById("itemListContainer");
-
-            const itemValue = itemInput.value.trim();
-            if (itemValue !== "") {
-                const newItem = document.createElement("div");
-                newItem.classList.add("input-group", "mb-2");
-
-                newItem.innerHTML = `
-            <input type="text" class="form-control" value="${itemValue}" disabled>
-            <button type="button" class="btn btn-danger removeItemBtn">Remove</button>
-        `;
-
-                itemListContainer.appendChild(newItem);
-                itemInput.value = ""; // Clear the input field
-
-                // Add functionality to remove item
-                newItem.querySelector(".removeItemBtn").addEventListener("click", function () {
-                    newItem.remove();
-                });
-            }
-        });
-
-    </script>
-
-
-    <script>
-        const form = document.querySelector('form'); // Get the form
-        const workTypeSelect = document.getElementById("work_type");
-        const typeSelect = document.getElementById("type");
-
-        if (form) {
-            form.addEventListener("submit", async function (event) {
-                event.preventDefault();
-                // console.log(preloader);
-                if (preloader) {
-                    preloader.style.display = "flex"; 
-                }
-
-                const formData = new FormData(form);
-
-                const itemInputs = document.querySelectorAll("#itemListContainer input[type='text']");
-                const itemList = Array.from(itemInputs).map(input => input.value.trim()).filter(value => value !== "");
-
-                const data = {
-                    type_api: "create_package",
-                    admin_id: document.querySelector('input[name="admin_id"]').value,
-                    package_name: document.getElementById("package_name").value,
-                    price: document.getElementById("price").value,
-                    description: document.getElementById("description").value,
-                    item_list: itemList,  // Send item_list as an array
-                    order_by: document.getElementById("order_by").value,
-                    is_show: document.getElementById("is_show").value,
-                    slug: document.getElementById("slug").value,
-                    work_type: document.getElementById("work_type").value,
-                    type: document.getElementById("type").value,
-                    after_discount: document.getElementById("after_discount").value,
-                };
-
-                formData.forEach((value, key) => {
-                    data[key] = value;
-                });
-
-                // console.log(data); 
-
-                try {
-                    const response = await fetch(CONFIG.API_URL, {
-                        method: 'POST',
-                        headers: {
-                            "Content-Type": "text/plain", // ✅ Fix CORS issue
-                        },
-                        body: JSON.stringify(data), // Send the form data as JSON
-                    });
-
-                    const result = await response.json(); // Parse the JSON response from the server
-
-                    console.log(result);
-                    if (result.success) {
-                        Swal.fire({
-                            title: "Success!",
-                            text: "Package created successfully!",
-                            icon: "success",
-                            confirmButtonText: "Okay",
-                        }).then(() => {
-                            location.reload();
-                        });
-                    } else {
-                        Swal.fire({
-                            title: "Error",
-                            text: result.message || "An unknown error occurred.",
-                            icon: "error",
-                            confirmButtonText: "Okay",
-                        });
-                    }
-                } catch (error) {
-                    Swal.fire({
-                        title: "Error",
-                        text: "Failed to create package. Please try again.",
-                        icon: "error",
-                        confirmButtonText: "Okay",
-                    });
-                } finally {
-                    if (preloader) {
-                        preloader.style.display = "none"; 
-                    }
-                }
-            });
-        } else {
-            console.error("Form not found in the DOM.");
-        }
-
-    </script>
-
 </body>
 
 </html>

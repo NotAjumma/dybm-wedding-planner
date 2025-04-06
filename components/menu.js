@@ -11,11 +11,15 @@ function createMenu() {
 	menuDiv.innerHTML = `
 				<div class="dlabnav-scroll">	
 					<ul class="metismenu" id="menu">
+
+
 						<li><a href="dashboard.html" class="" aria-expanded="false">
 								<i class="material-symbols-outlined">dashboard</i>
 								<span class="nav-text">Dashboard</span>
 							</a>
 						</li>
+
+
 						<li><a class="has-arrow" href="javascript:void()" aria-expanded="false">
 								<i class="material-symbols-outlined">package</i>
 								<span class="nav-text">Package</span>
@@ -26,6 +30,30 @@ function createMenu() {
 							</ul>
 
 						</li>
+
+						<li><a class="has-arrow" href="javascript:void()" aria-expanded="false">
+								<i class="material-symbols-outlined">local_mall</i>
+								<span class="nav-text">Bookings</span>
+							</a>
+							<ul aria-expanded="false">
+								<li><a href="booking-create.html">Create Booking</a></li>
+								<li><a href="booking-list.html">List Bookings</a></li>
+							</ul>
+
+						</li>
+
+						<li><a class="has-arrow" href="javascript:void()" aria-expanded="false">
+								<i class="material-symbols-outlined">people</i>
+								<span class="nav-text">Workers</span>
+							</a>
+							<ul aria-expanded="false">
+								<li><a href="worker-add.html">Create Worker</a></li>
+								<li><a href="worker-list.html">List Workers</a></li>
+							</ul>
+
+						</li>
+
+
 						<li><a class="has-arrow" href="javascript:void()" aria-expanded="false">
 								<i class="material-symbols-outlined">dashboard</i>
 								<span class="nav-text">Dashboard</span>

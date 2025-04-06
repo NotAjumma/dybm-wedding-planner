@@ -16,7 +16,7 @@ var CONFIG = {
             }
         }
     },
-    API_URL: "https://script.google.com/macros/s/AKfycbyaIsjiep67XdZvIySoYeL9g4m8GO1WqwFsmZ47TcsOsJSR6sDX9lvUOAcrn1uywshJ/exec",
+    API_URL: "https://script.google.com/macros/s/AKfycbxnGoL_cvwsv1vl73FMhZmMFCnmr1QDX0S_yKzLsbSga8bV-QiToDCETrMRKqKnRTkc/exec",
     STATES: [
         "Johor",
         "Kedah",
@@ -37,8 +37,25 @@ var CONFIG = {
     ],
     SYSTEM_NAME: "Saya Niaga",
     STATUS_BASIC: {
-        0: "Hidden",
+        0: "Not available",
         1: "Active"
     },
-
+    WORKER_TYPE: {
+        1: "Part Time",
+        2: "Full Time"
+    },
+    STATUS_BOOKING: {
+        0: "Cancelled",
+        1: "In Progress",
+        2: "Completed",
+    },
+    STATUS_PAYMENT: {
+        0: "Unpaid",
+        1: "Incomplete Paid",
+        2: "Complete Paid"
+    },
+    PAYMENT_TYPE: {
+        1: "Deposit",
+        2: "Full Payment"
+    },
 };
