@@ -23,30 +23,32 @@
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Loading...</title> <!-- Placeholder title -->
-    <link rel="stylesheet" href="css/style.css">
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title></title> <!-- Placeholder title -->
+	<link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
 
-    <!-- Preloader -->
-    <div class="overlay" id="loader">
-        <div class="spinner-border text-primary" role="status">
-            <span class="sr-only">Loading...</span>
-        </div>
-    </div>
+	<!-- Preloader -->
+	<div class="overlay" id="loader">
+		<div class="spinner-border text-primary" role="status">
+			<span class="sr-only"></span>
+		</div>
+	</div>
 
-    <!-- Header Container -->
-    <header id="header-container"></header>
+	<!-- Header Container -->
+	<header id="header-container"></header>
 
-    <script type="module">
-        import { createHeader } from './components/header.js';
+	<script type="module">
+		import { createHeader } from './components/header.js';
 
-        document.addEventListener('DOMContentLoaded', async function () {
-			const preloader 			= document.getElementById('loader');
-			const systemNameElement 	= document.querySelector('.system-name'); // Target the correct class
+		document.addEventListener('DOMContentLoaded', async function () {
+			const preloader = document.getElementById('loader');
+			const systemNameElement = document.querySelector('.system-name'); // Target the correct class
 			if (systemNameElement) {
 				systemNameElement.textContent = CONFIG.SYSTEM_NAME;
 			}
@@ -61,7 +63,7 @@
 				preloader.style.display = 'none';
 			}
 		});
-    </script>
+	</script>
 
 	<div class="authincation d-flex flex-column flex-lg-row flex-column-fluid">
 		<div class="login-aside text-center  d-flex flex-column flex-row-auto">
@@ -156,22 +158,22 @@
 	// Function to send login data to the backend
 	async function checkLogin() {
 		const preloader = document.getElementById("loader");
-		const email 	= document.getElementById('email').value;
-		const password 	= document.getElementById('dlab-password').value;
+		const email = document.getElementById('email').value;
+		const password = document.getElementById('dlab-password').value;
 
 		// Show the preloader
 		preloader.style.display = "flex";
 
 		const loginData = {
-			type_api	: "login",
-			email		: email,
-			password	: password
+			type_api: "login",
+			email: email,
+			password: password
 		};
 
 		try {
 			let response = await fetch(CONFIG.API_URL, {
-				method	: 'POST',
-				headers	: {
+				method: 'POST',
+				headers: {
 					"Content-Type": "text/plain", // ✅ Fix CORS issue
 				},
 				body: JSON.stringify(loginData)
@@ -182,21 +184,24 @@
 
 			// Check if the response is OK (200)
 			if (result.success) {
-					window.location.href = 'dashboard.html';
-			} else {
+				sessionStorage.setItem("authToken", result.token);
+				sessionStorage.setItem("currentUserId", result.userId);
+				window.location.href = 'dashboard.html';
+			}
+			else {
 				Swal.fire({
-					title				: "Error",
-					text				: result.message || "Unknown error occurred.",
-					icon				: "error",
-					confirmButtonText	: "Okay",
+					title: "Error",
+					text: result.message || "Unknown error occurred.",
+					icon: "error",
+					confirmButtonText: "Okay",
 				});
 			}
 		} catch (error) {
 			Swal.fire({
-				title				: "Error",
-				text				: "Failed to login. Please try again.",
-				icon				: "error",
-				confirmButtonText	: "Okay",
+				title: "Error",
+				text: "Failed to login. Please try again.",
+				icon: "error",
+				confirmButtonText: "Okay",
 			});
 		} finally {
 			document.getElementById("loader").style.display = "none";

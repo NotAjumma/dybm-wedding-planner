@@ -73,6 +73,7 @@ let dataSet = [
 	
     var table = $('#responsiveTable').DataTable( {
         responsive: true,
+		ordering: false,
 		language: {
 			paginate: {
 				next: '<i class="fa fa-angle-double-right" aria-hidden="true"></i>',
