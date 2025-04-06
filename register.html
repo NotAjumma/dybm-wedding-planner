@@ -27,7 +27,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Loading...</title> <!-- Placeholder title -->
+	<title></title> <!-- Placeholder title -->
 	<link rel="stylesheet" href="css/style.css">
 </head>
 
@@ -36,7 +36,7 @@
 	<!-- Preloader -->
 	<div class="overlay" id="loader">
 		<div class="spinner-border text-primary" role="status">
-			<span class="sr-only">Loading...</span>
+			<span class="sr-only"></span>
 		</div>
 	</div>
 
@@ -55,7 +55,7 @@
 			try {
 				preloader.style.display = 'flex';
 
-				await createHeader("Login", CONFIG.SYSTEM_NAME);
+				await createHeader("Register", CONFIG.SYSTEM_NAME);
 
 			} catch (error) {
 				console.error("Error loading header:", error);
