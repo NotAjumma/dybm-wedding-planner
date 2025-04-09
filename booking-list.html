@@ -13,6 +13,7 @@
     <link href="vendor/datatables/responsive/responsive.css" rel="stylesheet">
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0">
+
     <link class="main-css" href="css/style.css" rel="stylesheet">
 </head>
 <style>
@@ -61,6 +62,8 @@
         // import { createWalletOverlay } from './components/wallet-overlay.js';
         import { createNavHeader } from './components/nav-header.js';
 
+        let allPackages = [];
+
         document.addEventListener('DOMContentLoaded', async function () {
             document.getElementById("preloader").style.display = "flex";
 
@@ -82,15 +85,21 @@
                     window.location.href = "login.html";
                 } else {
                     fetchUserInfo(authToken, currentId);
+                    fetchBookingsByAdminId(authToken, currentId);
                     fetchPackagesByAdminId(authToken, currentId);
                     console.log(authToken);
                 }
 
+                const pageName = "Bookings List";
+
+                document.querySelectorAll(".page-name").forEach((el) => {
+                    el.textContent = pageName;
+                });
                 // Parallelize async functions to reduce wait time
                 await Promise.all([
-                    await createHeader("Package", CONFIG.SYSTEM_NAME),
+                    await createHeader(pageName, CONFIG.SYSTEM_NAME),
                     await createMenu(),
-                    await createHeaderNavbar("Package"),
+                    await createHeaderNavbar(pageName),
                     // await createWalletOverlay(),
                     await createNavHeader(),
                 ]);
@@ -155,67 +164,12 @@
                 let data = await response.json();
 
                 console.log(data);
-                if (data.success) {
-                    if (data.success) {
-                        const packages = data.data;
-                        const tbody = document.getElementById("packageTableBody");
-                        tbody.innerHTML = ""; // Clear existing rows
+                if (data.success === true) {
+                    allPackages = data.data || [];
+                    sessionStorage.setItem('allPackagesForBooking', JSON.stringify(allPackages));
+                    // const allPackagesFromStorage = JSON.parse(sessionStorage.getItem('allPackagesForBooking'));
+                    // console.log("📦 Retrieved from sessionStorage:", allPackagesFromStorage);
 
-                        packages.forEach((pkg, index) => {
-                            const itemList = JSON.parse(pkg.item_list || "[]").join(", ");
-                            const workTypeId = pkg.work_type;
-                            let workTypeLabel = "Unknown";
-                            let typeLabel = "Unknown";
-
-                            if (CONFIG.WORK_TYPE[workTypeId]) {
-                                workTypeLabel = CONFIG.WORK_TYPE[workTypeId].label;
-
-                                const packageTypeId = pkg.type;
-
-                                if (CONFIG.WORK_TYPE[workTypeId].TYPE_PACKAGE[packageTypeId]) {
-                                    typeLabel = CONFIG.WORK_TYPE[workTypeId].TYPE_PACKAGE[packageTypeId];
-                                }
-                            }
-
-                            const statusLabel = (() => {
-                                const label = CONFIG.STATUS_BASIC[pkg.is_show] || "Unknown";
-                                const badgeClass = pkg.is_show == 1 ? "success" : "danger"; // 1 = green, 2 = red
-                                return `<span class="badge badge-pill badge-${badgeClass}">${label}</span>`;
-                            })();
-
-
-                            const row = `
-                                    <tr>
-                                        <td>
-                                            <div class="form-check custom-checkbox">
-                                                <input type="checkbox" class="form-check-input" id="customCheckBox${index}" />
-                                                <label class="form-check-label" for="customCheckBox${index}"></label>
-                                            </div>
-                                        </td>
-                                        <td>#${pkg.id}</td>
-                                        <td>${pkg.package_name}</td>
-                                        <td>${workTypeLabel}</td>
-                                        <td>${typeLabel}</td>
-                                        <td>RM ${pkg.price.toLocaleString()}</td>
-                                        <td>RM ${pkg.discount_price ? pkg.discount_price.toLocaleString() : "-"}</td>
-                                        <td>RM ${pkg.after_discount.toLocaleString()}</td>
-                                        <td>${statusLabel}</td>
-                                        <td>
-                                            <div class="dropdown ms-auto c-pointer">
-                                                <div class="btn-link" data-bs-toggle="dropdown">
-                                                    <button type="button" class="btn btn-primary dropdown-toggle btn-xs">Action</button>
-                                                </div>
-                                                <div class="dropdown-menu">
-                                                    <a class="dropdown-item" href="#">Edit</a>
-                                                    <a class="dropdown-item" href="#">Delete</a>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                `;
-                            tbody.insertAdjacentHTML("beforeend", row);
-                        });
-                    }
 
                 } else {
                     Swal.fire({
@@ -224,14 +178,11 @@
                         icon: "error",
                         confirmButtonText: "Okay",
                     });
-                    // alert(data.message);
-                    // location.reload();
-
                 }
             } catch (error) {
                 Swal.fire({
                     title: "Error",
-                    text: "Network error 33, please try again",
+                    text: "Network error, please try again",
                     icon: "error",
                     confirmButtonText: "Okay",
                 });
@@ -243,6 +194,182 @@
 
             }
         }
+
+        async function fetchBookingsByAdminId(authToken, currentId) {
+            const preloader = document.getElementById('preloader');
+
+            try {
+                let response = await fetch(`${CONFIG.API_URL}?action=booking_by_admin_id&token=${authToken}&admin_id=${currentId}`);
+                let data = await response.json();
+
+                console.log("data");
+                console.log(data);
+
+                if (data.success) {
+                    const bookings = data.data;
+                    const tbody = document.getElementById("workerTableBody")
+                    tbody.innerHTML = "";
+                    const allPackages = JSON.parse(sessionStorage.getItem('allPackagesForBooking'));
+                    console.log("bookings");
+                    console.log(bookings);
+                    bookings.forEach((booking, index) => {
+
+                        const packageDetails = allPackages.find(pkg => pkg.id === booking.package_id);
+                        // console.log("packageDetails");
+                        // console.log(packageDetails);
+                        const workType = CONFIG.WORK_TYPE[packageDetails.work_type];
+                        const packageType = workType ? workType.TYPE_PACKAGE[packageDetails.type] : '';
+
+                        function formattedDate(dateString) {
+                            const dateObj = new Date(dateString);
+                            return dateObj.toLocaleDateString('en-GB', {
+                                day: '2-digit',
+                                month: 'long',
+                                year: 'numeric'
+                            });
+                        }
+
+                        // function formattedDateTime(dateString) {
+                        //     const dateObj = new Date(dateString);
+
+                        //     // Format the date to YYYY-MM-DD
+                        //     const formattedDate = dateObj.toISOString().split('T')[0];
+
+                        //     // Format the time to HH:mm (24-hour format)
+                        //     const formattedTime = dateObj.toLocaleTimeString('en-GB', {
+                        //         hour: '2-digit',
+                        //         minute: '2-digit',
+                        //         hour12: false
+                        //     });
+
+                        //     // Combine both date and time
+                        //     return `${formattedDate}, ${formattedTime}`;
+                        // }
+
+
+
+                        function convertTo12HourFormat(timeStr) {
+                            if (!timeStr || typeof timeStr !== 'string') return '-';
+
+                            const [hourStr, minuteStr] = timeStr.split(':');
+                            const hour = parseInt(hourStr);
+                            const minute = parseInt(minuteStr);
+
+                            if (isNaN(hour) || isNaN(minute)) return '-';
+
+                            const ampm = hour >= 12 ? 'PM' : 'AM';
+                            const adjustedHour = hour % 12 || 12;
+
+                            return `${adjustedHour}:${minute.toString().padStart(2, '0')} ${ampm}`;
+                        }
+
+
+                        const statusLabel = (() => {
+                            const label = CONFIG.STATUS_BOOKING[booking.booking_status] || "Unknown";
+
+                            let badgeClass;
+                            switch (booking.booking_status) {
+                                case 0: // Unpaid
+                                    badgeClass = "danger";
+                                    break;
+                                case 1: // Incomplete Paid
+                                    badgeClass = "light";
+                                    break;
+                                case 2: // Complete Paid
+                                    badgeClass = "success";
+                                    break;
+                                default:
+                                    badgeClass = "secondary";
+                            }
+
+                            return `<span class="badge light badge-${badgeClass}">${label}</span>`;
+                        })();
+
+
+                        const paymentStatusLabel = (() => {
+                            const label = CONFIG.STATUS_PAYMENT[booking.payment_status] || "Unknown";
+
+                            let badgeClass;
+                            switch (booking.payment_status) {
+                                case 0: // Unpaid
+                                    badgeClass = "danger";
+                                    break;
+                                case 1: // Incomplete Paid
+                                    badgeClass = "warning";
+                                    break;
+                                case 2: // Complete Paid
+                                    badgeClass = "success";
+                                    break;
+                                default:
+                                    badgeClass = "secondary";
+                            }
+
+                            return `<span class="badge badge-pill badge-${badgeClass}">${label}</span>`;
+                        })();
+
+                        // Creating table row with booking's information
+                        const row = `
+                    <tr>
+                        <td>
+                            <div class="form-check custom-checkbox">
+                                <input type="checkbox" class="form-check-input" id="customCheckBox${index}" />
+                                <label class="form-check-label" for="customCheckBox${index}"></label>
+                            </div>
+                        </td>
+                        <td>#${booking.invoice_no}</td>
+                        <td>${booking.customer_name}</td>
+                        <td>${packageDetails.package_name}</td>
+                        <td>${packageType}</td>
+                        <td>RM${booking.price}</td>
+                        <td>RM${booking.balance}</td>
+                        <td>${formattedDate(booking.date)}</td>
+                        <td>${convertTo12HourFormat(booking.time) || '-'}</td>
+                        <td>${statusLabel}</td>
+                        <td>${paymentStatusLabel}</td>
+                        <td>${booking.created_at}</td>
+
+                        <td>
+                            <div class="dropdown ms-auto c-pointer">
+                                <div class="btn-link" data-bs-toggle="dropdown">
+                                    <button type="button" class="btn btn-primary dropdown-toggle btn-xs">Action</button>
+                                </div>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="#">Edit</a>
+                                    <a class="dropdown-item" href="#">Delete</a>
+                                    <a class="dropdown-item" href="receipt.html?bookingId=${booking.invoice_no}">Receipt</a>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+
+                        // Insert the new row into the table body
+                        tbody.insertAdjacentHTML("beforeend", row);
+                    });
+                } else {
+                    Swal.fire({
+                        title: "Error",
+                        text: "Session expired, please try again.",
+                        icon: "error",
+                        confirmButtonText: "Okay",
+                    });
+                }
+
+            } catch (error) {
+                Swal.fire({
+                    title: "Error",
+                    text: "Network error, please try again.",
+                    icon: "error",
+                    confirmButtonText: "Okay",
+                });
+            } finally {
+                // Hide the preloader after data fetching is complete
+                if (preloader) {
+                    preloader.style.display = "none";
+                }
+            }
+        }
+
     </script>
 
 
@@ -921,7 +1048,7 @@
                         <div class="col-12">
                             <div class="card">
                                 <div class="card-header">
-                                    <h4 class="card-title">Packages List</h4>
+                                    <h4 class="card-title page-name"></h4>
                                 </div>
                                 <div class="card-body">
                                     <div class="table-responsive">
@@ -935,18 +1062,21 @@
                                                             <label class="form-check-label" for="checkAll"></label>
                                                         </div>
                                                     </th>
-                                                    <th>Package No</th>
-                                                    <th>Name</th>
-                                                    <th>Work Type</th>
+                                                    <th>Booking No</th>
+                                                    <th>Customer Name</th>
+                                                    <th>Package</th>
                                                     <th>Package Type</th>
                                                     <th>Price</th>
-                                                    <th>Discount</th>
-                                                    <th>After Discount</th>
-                                                    <th>Status</th>
+                                                    <th>Balance</th>
+                                                    <th>Date</th>
+                                                    <th>Time</th>
+                                                    <th>Work Status</th>
+                                                    <th>Payment Status</th>
+                                                    <th>Created At</th>
                                                     <th>Action</th>
                                                 </tr>
                                             </thead>
-                                            <tbody id="packageTableBody">
+                                            <tbody id="workerTableBody">
 
                                             </tbody>
                                         </table>
