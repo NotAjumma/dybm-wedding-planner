@@ -981,14 +981,6 @@
 
                                         <div class="mb-3 row">
                                             <div class="col-md-6">
-                                                <label for="bookingSelect" class="form-label required">Booking
-                                                    Status</label>
-                                                <select class="form-control" id="bookingSelect" required>
-                                                    <option value="1">In Progress</option>
-                                                </select>
-                                            </div>
-
-                                            <div class="col-md-6">
                                                 <label for="bookingSelect" class="form-label required">Payment
                                                     Method</label>
                                                 <select class="form-control" id="paymentMethod" required>
@@ -997,21 +989,11 @@
                                                     <option value="Cash">Cash</option>
                                                 </select>
                                             </div>
-                                        </div>
 
-                                        <div class="mb-3 row">
                                             <div class="col-md-6">
                                                 <label for="paymentTypeSelect" class="form-label required">Payment
                                                     Type</label>
                                                 <select class="form-control" id="paymentTypeSelect" required>
-                                                    <!-- States will be populated from values.js -->
-                                                </select>
-                                            </div>
-
-                                            <div class="col-md-6">
-                                                <label for="paymentStatusSelect" class="form-label required">Payment
-                                                    Status</label>
-                                                <select class="form-control" id="paymentStatusSelect" required>
                                                     <!-- States will be populated from values.js -->
                                                 </select>
                                             </div>
@@ -1043,6 +1025,24 @@
                                                 <label for="balance" class="form-label required">Balance (RM)</label>
                                                 <input type="number" step="0.01" class="form-control" id="balance"
                                                     name="balance" readonly>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3 row">
+                                            <div class="col-md-6" style="visibility: hidden;">
+                                                <label for="bookingSelect" class="form-label required">Work
+                                                    Status</label>
+                                                <select class="form-control" id="bookingSelect" required>
+                                                    <option value="1">In Progress</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="col-md-6" style="visibility: hidden;">
+                                                <label for="paymentStatusSelect" class="form-label required">Payment
+                                                    Status</label>
+                                                <select class="form-control" id="paymentStatusSelect" required>
+                                                    <!-- States will be populated from values.js -->
+                                                </select>
                                             </div>
                                         </div>
 
@@ -1106,7 +1106,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/js/bootstrap.min.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script> -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
@@ -1179,6 +1179,7 @@
 
                 // Set payment status to 2 (Paid)
                 paymentStatusSelect.value = "2";
+                paymentStatusSelect.disabled = true;
             } else {
                 discount = parseFloat(discountInput.value || 0);
                 amountAfterDiscount = amount - discount;
@@ -1190,34 +1191,42 @@
 
                 // Optional: Reset payment status (optional)
                 paymentStatusSelect.value = "1";
+                paymentStatusSelect.disabled = true;
             }
         });
 
-        document.getElementById('discount').addEventListener('change', function () {
+        // Function to calculate balance
+        function calculateBalance() {
             const paymentType = parseFloat(document.getElementById('paymentTypeSelect').value);
-            const amountPaidInput = document.getElementById('amountPaid');
-            const balanceInput = document.getElementById('balance');
-            const amount = parseFloat(document.getElementById('price').value || 0);
-            const discount = parseFloat(document.getElementById('discount').value || 0);
-
-            const amountAfterDiscount = amount - discount;
-            if (paymentType == 2) {
-                amountPaidInput.value = amountAfterDiscount.toFixed(2);
-                balanceInput.value = 0;
-            }
-            balanceInput.value = amountAfterDiscount.toFixed(2);
-        });
-
-        document.getElementById('amountPaid').addEventListener('change', function () {
-            const balanceInput = document.getElementById('balance');
             const amount = parseFloat(document.getElementById('price').value || 0);
             const discount = parseFloat(document.getElementById('discount').value || 0);
             const amountPaidInput = parseFloat(document.getElementById('amountPaid').value || 0);
 
-            const amountAfterDiscount = amount - discount - amountPaidInput;
-            // amountPaidInput.value = amountAfterDiscount.toFixed(2);
-            balanceInput.value = amountAfterDiscount.toFixed(2);
-        });
+            const amountAfterDiscount = amount - discount;
+
+            const balanceInput = document.getElementById('balance');
+            const amountPaidInputElement = document.getElementById('amountPaid');
+
+            if (paymentType == 2) {
+                // If payment type is 2 (assumed to be complete), set amount paid to amountAfterDiscount and balance to 0
+                amountPaidInputElement.value = amountAfterDiscount.toFixed(2);
+                balanceInput.value = '0.00'; // Balance is 0 in this case
+            } else {
+                // Otherwise, calculate the remaining balance
+                const remainingBalance = amountAfterDiscount - amountPaidInput;
+                balanceInput.value = remainingBalance.toFixed(2);
+            }
+        }
+
+        // Add event listeners to trigger calculation whenever relevant fields change
+        document.getElementById('discount').addEventListener('input', calculateBalance);
+        document.getElementById('amountPaid').addEventListener('input', calculateBalance);
+        document.getElementById('paymentTypeSelect').addEventListener('change', calculateBalance);
+        document.getElementById('price').addEventListener('input', calculateBalance);
+
+        // Call calculateBalance on initial page load to set the correct values based on initial inputs
+        calculateBalance();
+
 
         document.getElementById('packageSelect').addEventListener('change', function () {
             const selectedOption = this.options[this.selectedIndex];
@@ -1342,6 +1351,31 @@
 
 
     <script>
+        function getCurrentDateTimeInMalaysia() {
+            const options = {
+                timeZone: 'Asia/Kuala_Lumpur',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false // 24-hour format
+            };
+
+            const formatter = new Intl.DateTimeFormat('en-GB', options);
+            const formattedDate = formatter.format(new Date());
+
+            // Reformat the date to YYYY-MM-DD HH:mm:ss
+            const [day, month, year, hour, minute, second] = formattedDate.split(/[^\d\w]/);
+            const formattedDateTimeString = `${year}-${month}-${day} ${hour},${minute}:${second}`;
+
+            // Add single quotes around the formatted date-time
+            return `'${formattedDateTimeString}`;
+        }
+
+
+
         const form = document.querySelector('form');
         const currentId = sessionStorage.getItem("currentUserId");
         const adminIdInput = document.querySelector('input[name="admin_id"]');
@@ -1365,6 +1399,15 @@
                 let amountPaid = document.getElementById("amountPaid").value;
                 let after_discount = price - discount;
                 let balance = price - discount - amountPaid;
+                const time = document.getElementById("time").value; // Gets time in HH:mm format
+                const date = document.getElementById("date").value; // Gets date in YYYY-MM-DD format
+                const phone = document.getElementById("phone").value; // Gets date in YYYY-MM-DD format
+
+                // Make sure the values are in string format (they should already be strings)
+                const timeString = "'" + time;
+                const dateString = "'" + date;
+                const phoneString = "'" + phone;
+                const currentDateTime = getCurrentDateTimeInMalaysia();
 
                 const data = {
                     type_api: "create_booking",
@@ -1372,12 +1415,12 @@
                     package_id: document.getElementById("packageSelect").value,
                     customer_name: document.getElementById("customer_name").value,
                     no_ic: document.getElementById("no_ic").value,
-                    phone: document.getElementById("phone").value,
+                    phone: phoneString,
                     address: document.getElementById("address").value,
                     state: document.getElementById("stateSelect").value,
                     whatsapp: document.getElementById("whatsapp").value,
-                    time: document.getElementById("time").value,
-                    date: document.getElementById("date").value,
+                    time: timeString,
+                    date: dateString,
                     price: document.getElementById("price").value,
                     discount: document.getElementById("discount").value,
                     after_discount: after_discount,
@@ -1388,6 +1431,8 @@
                     payment_status: document.getElementById("paymentStatusSelect").value,
                     payment_method: document.getElementById("paymentMethod").value,
                     service_type: document.getElementById("serviceType").value,
+                    created_at: currentDateTime,
+                    updated_at: currentDateTime,
                 };
 
                 console.log(data);

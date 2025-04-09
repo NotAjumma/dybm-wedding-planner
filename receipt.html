@@ -19,7 +19,7 @@
 
 	<!-- jsPDF -->
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+	<!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script> -->
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </head>
@@ -117,6 +117,7 @@
 				} else {
 					fetchUserInfo(authToken, currentId);
 					fetchBookingById(authToken, currentId, bookingId);
+					fetchPackagesByAdminId(authToken, currentId);
 					console.log(authToken);
 				}
 
@@ -156,6 +157,7 @@
 				if (data.success) {
 
 					allPackages = data.data || [];
+					console.log("allPackages");
 					console.log(allPackages);
 					sessionStorage.setItem('allPackages', JSON.stringify(allPackages));
 					// packageSelect.innerHTML = '<option value="">Select Package</option>';
@@ -219,10 +221,25 @@
 					document.getElementById("from-email").textContent = data.user.email;
 					document.getElementById("from-phone").textContent = data.user.phone;
 
-					document.getElementById('whatsapp').textContent = data.user.whatsapp || `-`;
-					document.getElementById('tiktok').textContent = data.user.tiktok || `-`;
-					document.getElementById('instagram').textContent = data.user.instagram || `-`;
-					document.getElementById('facebook').textContent = data.user.facebook || `-`;
+					// Update the social media info
+					document.getElementById('whatsapp').textContent = data.user.whatsapp || '-';
+					document.getElementById('tiktok').textContent = data.user.tiktok || '-';
+					document.getElementById('instagram').textContent = data.user.instagram || '-';
+					document.getElementById('facebook').textContent = data.user.facebook || '-';
+
+					// Hide the entire container if no social media handle exists
+					if (!data.user.whatsapp) {
+						document.getElementById('whatsapp-container').style.setProperty('display', 'none', 'important');
+					}
+					if (!data.user.tiktok) {
+						document.getElementById('tiktok-container').style.setProperty('display', 'none', 'important');
+					}
+					if (!data.user.instagram) {
+						document.getElementById('instagram-container').style.setProperty('display', 'none', 'important');
+					}
+					if (!data.user.facebook) {
+						document.getElementById('facebook-container').style.setProperty('display', 'none', 'important');
+					}
 
 					sessionStorage.setItem("workTypeId", data.user.work_type);
 
@@ -305,26 +322,46 @@
 							year: 'numeric'
 						});
 
+						if (!itemList || itemList.length === 0) {
+							// Hide the Item column and header if no items exist
+							document.getElementById('item-header').style.display = 'none';
+							const rows = document.querySelectorAll('tbody tr');
+							rows.forEach(row => {
+								row.querySelector('td:nth-child(5)').style.display = 'none'; // Assuming the Item column is the 5th column
+							});
+						}
+
 						function convertTo12HourFormat(timeStr) {
-							const [hours, minutes] = timeStr.split(':');
-							const h = parseInt(hours);
-							const suffix = h >= 12 ? 'PM' : 'AM';
-							const hour12 = ((h + 11) % 12 + 1); // converts 0–23 to 1–12
-							return `${hour12}:${minutes} ${suffix}`;
+							if (!timeStr || typeof timeStr !== 'string') return '-';
+
+							const [hourStr, minuteStr] = timeStr.split(':');
+							const hour = parseInt(hourStr);
+							const minute = parseInt(minuteStr);
+
+							if (isNaN(hour) || isNaN(minute)) return '-';
+
+							const ampm = hour >= 12 ? 'PM' : 'AM';
+							const adjustedHour = hour % 12 || 12;
+
+							return `${adjustedHour}:${minute.toString().padStart(2, '0')} ${ampm}`;
 						}
 
 
 						let row = document.createElement("tr");
 						row.innerHTML = `
 							<td class="center">1</td> <!-- You can hardcode the index if there's only one item -->
-							<td class="left">Date: ${formattedDate}<br> Time: ${convertTo12HourFormat(booking.time) || 'N/A'}</td>
+							<td class="left">
+								Date: ${formattedDate}
+								${booking.time ? `<br> Time: ${convertTo12HourFormat(booking.time)}` : ''}
+							</td>
 							<td class="left strong">${packageDetails.package_name ? packageDetails.package_name : 'Package not found'}</td>
 							<td class="left strong">${packageType}</td>
-							<td>
+							${itemList && itemList.length > 0 ? `
+							<td id="item-header">
 								<ul>
 									${itemList.map(item => `<li>${item}</li>`).join('')}
 								</ul>
-							</td>
+							</td>` : ''}
 							<td class="left strong">RM${booking.price ? booking.price : ''}</td>
 
 						`;
@@ -355,9 +392,10 @@
 							<td class="right"><strong>RM${booking.after_discount}</strong</td>
 						</tr>
 						<tr>
-							<td class="left">Amount Paid</td>
-							<td class="right">RM${booking.paid_amount}</td>
+							<td class="left" ${booking.payment_type == 2 ? 'style="background-color: #e7e7e7; font-weight: 600;"' : ''}>${booking.payment_type == 2 ? '<strong>Amount Paid</strong>' : 'Amount Paid'}
+							<td class="right" ${booking.payment_type == 2 ? 'style="background-color: #e7e7e7; font-weight: 600;"' : ''}>${booking.payment_type == 2 ? `<strong>RM${booking.paid_amount}</strong>` : `RM${booking.paid_amount}`}
 						</tr>
+
 						${booking.payment_type !== 2 ? `
 						<tr>
 							<td class="left" style="background-color: #e7e7e7;"><strong>Balance Due</strong></td>
@@ -379,6 +417,8 @@
 
 				}
 			} catch (error) {
+				console.log(error);
+
 				Swal.fire({
 					title: "Error",
 					text: "Invalid receipt no, please try again",
@@ -386,7 +426,7 @@
 					confirmButtonText: "Okay",
 				}).then(() => {
 					// Redirect to the dashboard after the Swal confirmation
-					window.location.href = 'dashboard.html';
+					// window.location.href = 'dashboard.html';
 				});
 			}
 			finally {
@@ -1116,7 +1156,7 @@
 												<th>Package</th>
 												<th>Type</th>
 												<!-- <th class="left">Description</th> -->
-												<th class="center">Item</th>
+												<th class="center" id="item-header">Item</th>
 												<th class="center">Price</th>
 
 											</tr>
@@ -1147,23 +1187,26 @@
 										<div class="mt-4 col-xl-12 col-lg-12 col-md-12 col-sm-12">
 											<div class="d-flex" style="gap: 20px;">
 												<!-- WhatsApp Info -->
-												<div class="d-flex align-items-center">
-													<i class="fab fa-whatsapp me-2"></i>
+												<div class="d-flex align-items-center" id="whatsapp-container">
+													<i class="fab fa-whatsapp me-2" id="whatsapp-icon"></i>
 													<span id="whatsapp">011-xxxxx</span>
 												</div>
+
 												<!-- TikTok Info -->
-												<div class="d-flex align-items-center">
-													<i class="fab fa-tiktok me-2"></i>
+												<div class="d-flex align-items-center" id="tiktok-container">
+													<i class="fab fa-tiktok me-2" id="tiktok-icon"></i>
 													<span id="tiktok">@tiktok_name</span>
 												</div>
+
 												<!-- Instagram Info -->
-												<div class="d-flex align-items-center">
-													<i class="fab fa-instagram me-2"></i>
+												<div class="d-flex align-items-center" id="instagram-container">
+													<i class="fab fa-instagram me-2" id="instagram-icon"></i>
 													<span id="instagram">@instagram_name</span>
 												</div>
+
 												<!-- Facebook Info -->
-												<div class="d-flex align-items-center">
-													<i class="fab fa-facebook me-2"></i>
+												<div class="d-flex align-items-center" id="facebook-container">
+													<i class="fab fa-facebook me-2" id="facebook-icon"></i>
 													<span id="facebook">facebook_name</span>
 												</div>
 											</div>
