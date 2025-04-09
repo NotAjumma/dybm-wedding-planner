@@ -61,6 +61,8 @@
         // import { createWalletOverlay } from './components/wallet-overlay.js';
         import { createNavHeader } from './components/nav-header.js';
 
+        let allPackages = [];
+
         document.addEventListener('DOMContentLoaded', async function () {
             document.getElementById("preloader").style.display = "flex";
             const preloader = document.getElementById("preloader"); // Loader element (optional)
@@ -164,18 +166,22 @@
 
                 console.log(data);
                 if (data.success) {
-                    packageSelect.innerHTML = '<option value="">Select Package</option>';
 
-                    const packages = data.data || [];
+                    allPackages = data.data || [];
+                    console.log(allPackages);
+                    sessionStorage.setItem('allPackages', JSON.stringify(allPackages));
+                    // packageSelect.innerHTML = '<option value="">Select Package</option>';
 
-                    console.log(packages);
-                    packages.forEach(pkg => {
-                        const option = document.createElement('option');
-                        option.value = pkg.id;
-                        option.textContent = pkg.package_name;
-                        option.setAttribute('data-price', pkg.price);
-                        packageSelect.appendChild(option);
-                    });
+                    // const packages = data.data || [];
+
+                    // console.log(packages);
+                    // packages.forEach(pkg => {
+                    //     const option = document.createElement('option');
+                    //     option.value = pkg.id;
+                    //     option.textContent = pkg.package_name;
+                    //     option.setAttribute('data-price', pkg.price);
+                    //     packageSelect.appendChild(option);
+                    // });
 
                 } else {
                     Swal.fire({
@@ -935,7 +941,7 @@
 
                                         <div class="mb-3 row">
                                             <div class="col-md-6">
-                                                <label for="phone" class="form-label">Phone</label>
+                                                <label for="phone" class="form-label required">Phone</label>
                                                 <input type="text" class="form-control" id="phone" name="phone"
                                                     required>
                                             </div>
@@ -974,7 +980,7 @@
                                         </div>
 
                                         <div class="mb-3 row">
-                                            <div class="col-md-4">
+                                            <div class="col-md-6">
                                                 <label for="bookingSelect" class="form-label required">Booking
                                                     Status</label>
                                                 <select class="form-control" id="bookingSelect" required>
@@ -982,7 +988,19 @@
                                                 </select>
                                             </div>
 
-                                            <div class="col-md-4">
+                                            <div class="col-md-6">
+                                                <label for="bookingSelect" class="form-label required">Payment
+                                                    Method</label>
+                                                <select class="form-control" id="paymentMethod" required>
+                                                    <option value="QR Code">QR Code</option>
+                                                    <option value="Transfer">Transfer</option>
+                                                    <option value="Cash">Cash</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3 row">
+                                            <div class="col-md-6">
                                                 <label for="paymentTypeSelect" class="form-label required">Payment
                                                     Type</label>
                                                 <select class="form-control" id="paymentTypeSelect" required>
@@ -990,7 +1008,7 @@
                                                 </select>
                                             </div>
 
-                                            <div class="col-md-4">
+                                            <div class="col-md-6">
                                                 <label for="paymentStatusSelect" class="form-label required">Payment
                                                     Status</label>
                                                 <select class="form-control" id="paymentStatusSelect" required>
@@ -1092,6 +1110,46 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
+
+        let allPackagesRetrieve = [];
+
+        // Check if data exists in sessionStorage
+        const storedPackages = sessionStorage.getItem('allPackages');
+        if (storedPackages) {
+            allPackagesRetrieve = JSON.parse(storedPackages);
+            // console.log("Loaded packages from sessionStorage:", allPackagesRetrieve);
+        } else {
+            // If not in storage, then fetch from API
+            fetchPackagesByAdminId(authToken, currentAdminId);
+        }
+
+        function displayPackagesByService(serviceId) {
+            console.log("displayPackagesByService:", allPackagesRetrieve);
+
+            const filteredPackages = allPackagesRetrieve.filter(pkg => pkg.work_type == serviceId);
+
+            packageSelect.innerHTML = '<option value="">Select Package</option>';
+
+            filteredPackages.forEach(pkg => {
+                const option = document.createElement('option');
+                option.value = pkg.id;
+                option.textContent = pkg.package_name;
+                option.setAttribute('data-price', pkg.price);
+                packageSelect.appendChild(option);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            document.getElementById('serviceType').addEventListener('change', function () {
+                const selectedServiceId = this.value;
+
+                if (selectedServiceId) {
+                    displayPackagesByService(selectedServiceId);
+                } else {
+                    packageSelect.innerHTML = '<option value="">Select Package</option>';
+                }
+            });
+        });
         document.getElementById('paymentTypeSelect').addEventListener('change', function () {
             const paymentType = this.value;
             const balanceField = document.getElementById('balance').closest('.col-md-6');
@@ -1102,13 +1160,17 @@
             const paymentStatusSelect = document.getElementById('paymentStatusSelect');
 
             const amount = parseFloat(document.getElementById('price').value || 0);
-            const discount = parseFloat(discountInput.value || 0);
-            const amountAfterDiscount = amount - discount;
+
+            let discount = 0;
+            let amountAfterDiscount = 0;
 
             // Reset discount to 0
             discountInput.value = 0;
+            balanceInput.value = 0;
 
             if (paymentType == "2") {
+                discount = parseFloat(discountInput.value || 0);
+                amountAfterDiscount = amount - discount;
                 // Full Payment
                 discountInput.value = 0;
                 balanceField.style.display = "none";
@@ -1118,25 +1180,31 @@
                 // Set payment status to 2 (Paid)
                 paymentStatusSelect.value = "2";
             } else {
+                discount = parseFloat(discountInput.value || 0);
+                amountAfterDiscount = amount - discount;
                 // Deposit or others
                 discountInput.value = 0;
                 balanceField.style.display = "block";
-                amountPaidInput.value = "";
+                amountPaidInput.value = 0;
                 balanceInput.value = amountAfterDiscount.toFixed(2);
 
                 // Optional: Reset payment status (optional)
-                paymentStatusSelect.value = "";
+                paymentStatusSelect.value = "1";
             }
         });
 
         document.getElementById('discount').addEventListener('change', function () {
+            const paymentType = parseFloat(document.getElementById('paymentTypeSelect').value);
             const amountPaidInput = document.getElementById('amountPaid');
             const balanceInput = document.getElementById('balance');
             const amount = parseFloat(document.getElementById('price').value || 0);
             const discount = parseFloat(document.getElementById('discount').value || 0);
 
             const amountAfterDiscount = amount - discount;
-            // amountPaidInput.value = amountAfterDiscount.toFixed(2);
+            if (paymentType == 2) {
+                amountPaidInput.value = amountAfterDiscount.toFixed(2);
+                balanceInput.value = 0;
+            }
             balanceInput.value = amountAfterDiscount.toFixed(2);
         });
 
@@ -1292,21 +1360,35 @@
 
                 const formData = new FormData(form);
 
+                let price = document.getElementById("price").value;
+                let discount = document.getElementById("discount").value;
+                let amountPaid = document.getElementById("amountPaid").value;
+                let after_discount = price - discount;
+                let balance = price - discount - amountPaid;
+
                 const data = {
-                    type_api: "create_worker",
+                    type_api: "create_booking",
                     admin_id: document.querySelector('input[name="admin_id"]').value,
-                    name: document.getElementById("name").value,
+                    package_id: document.getElementById("packageSelect").value,
+                    customer_name: document.getElementById("customer_name").value,
+                    no_ic: document.getElementById("no_ic").value,
                     phone: document.getElementById("phone").value,
-                    whatsapp: document.getElementById("whatsapp").value,
                     address: document.getElementById("address").value,
                     state: document.getElementById("stateSelect").value,
-                    worker_type: document.getElementById("worker_type_select").value,
-                    status: document.getElementById("status_select").value,
+                    whatsapp: document.getElementById("whatsapp").value,
+                    time: document.getElementById("time").value,
+                    date: document.getElementById("date").value,
+                    price: document.getElementById("price").value,
+                    discount: document.getElementById("discount").value,
+                    after_discount: after_discount,
+                    paid_amount: document.getElementById("amountPaid").value,
+                    balance: balance,
+                    booking_status: document.getElementById("bookingSelect").value,
+                    payment_type: document.getElementById("paymentTypeSelect").value,
+                    payment_status: document.getElementById("paymentStatusSelect").value,
+                    payment_method: document.getElementById("paymentMethod").value,
+                    service_type: document.getElementById("serviceType").value,
                 };
-
-                formData.forEach((value, key) => {
-                    data[key] = value;
-                });
 
                 console.log(data);
 
@@ -1329,12 +1411,13 @@
                             icon: "success",
                             confirmButtonText: "Okay",
                         }).then(() => {
-                            location.reload();
+                            // Redirect to receipt.html and pass booking.id as a query parameter
+                            window.location.href = `receipt.html?bookingId=${result.id}`;
                         });
                     } else {
                         Swal.fire({
                             title: "Error",
-                            text: result.message || "An unknown error occurred.",
+                            text: result.error || "An unknown error occurred.",
                             icon: "error",
                             confirmButtonText: "Okay",
                         });

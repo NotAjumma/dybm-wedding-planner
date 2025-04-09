@@ -38,6 +38,7 @@ function createMenu() {
 							<ul aria-expanded="false">
 								<li><a href="booking-create.html">Create Booking</a></li>
 								<li><a href="booking-list.html">List Bookings</a></li>
+								<li><a href="receipt.html?bookingId=BKG-56d955ee">Receipt</a></li>
 							</ul>
 
 						</li>
