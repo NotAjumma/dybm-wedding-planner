@@ -16,7 +16,7 @@ var CONFIG = {
             }
         }
     },
-    API_URL: "https://script.google.com/macros/s/AKfycbxnGoL_cvwsv1vl73FMhZmMFCnmr1QDX0S_yKzLsbSga8bV-QiToDCETrMRKqKnRTkc/exec",
+    API_URL: "https://script.google.com/macros/s/AKfycbx0mpubdoozI3I4zhdZxSwQMT7mnl429L8YD8zJ04YEhjz_6uCS6_ZGpBe2YV169qWV/exec",
     STATES: [
         "Johor",
         "Kedah",
